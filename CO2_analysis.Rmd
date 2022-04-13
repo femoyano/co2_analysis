@@ -1,0 +1,122 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Analyse data from Joyce et al. 2021 GRL
+
+### Procedure
+- Use the dynamic atmospheric transport control data for Point Barrow (where eveything is variable). See file names.
+- Aggregate data in yearly files into a pandas dataframe
+- Calculate monthly means
+- Read in Point Barrow observations data
+- Plot simulated vs observed CO2 (Joyce figure S8)
+- Apply ccgcrv to observed and simulations to get a fit to seasonal CO2
+- Calculate CO2 seasonal amplitude changes and plot
+
+```{python}
+# Set python environment to conda 'recovery' 
+import pandas as pd
+import os
+from glob import glob
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+```
+
+Get list of files
+```{python}
+# Files with output for constant atmopsheric transport
+# files = sorted(glob.glob(os.path.realpath("../../../Data/Joyce_et_al_2021_GRL/BRW_station_co2_atmos_vary*")))
+files = sorted(glob(os.path.realpath("../../../Data/Joyce_et_al_2021_GRL/BRW_station_co2_atmos_const*")))
+```
+
+Concatenate all data into a data frame
+```{python}
+for i in range(0, len(files)):
+    f = files[i]
+    # print(f)
+    data_in = pd.read_csv(f, delim_whitespace=True, header=None, skiprows=3)
+    if i == 0:
+        colnames = pd.read_csv(f, sep=',', skiprows=2, nrows=0, skipinitialspace=True).columns.tolist()
+        data_in.columns = colnames
+        data = data_in  
+    else:
+        data_in.columns = colnames
+        data = pd.concat([data, data_in])
+```
+
+Get monthly averages
+```{python}
+data['co2'] = data["Background"] + data["FF"] + data["Ocean"] + data["NEE_ctrl"] + data["FIRE_ctrl"]
+mdata = data.groupby(['Year', 'Month']).agg(np.mean)
+del [data, data_in]
+```
+
+Calculate co2 from control
+```{python}
+co2_df = mdata[['Dec_year', 'co2']]
+co2_df.columns = ["decimal_year", "co2_ppm"]
+co2_df = co2_df.round(2) # to match observation monthly file
+co2_df['decimal_year'] = co2_df['decimal_year'] - 0.04 
+co2_df.columns = ['decimal_year', 'co2_ppm_sim']
+```
+
+Read in Point Barrow data
+```{python}
+file_PB = os.path.realpath('../data_test1/brw-insitu_mon.txt')
+obs_PB = pd.read_csv(file_PB, sep=' ')
+obs_PB.columns = ['decimal_year', 'co2_ppm_obs']
+obsmod = pd.merge(obs_PB, co2_df, on="decimal_year")
+```
+
+Merge and plot observed vs modelled CO2
+```{python}
+plt.close()
+plt.plot(obsmod['decimal_year'], obsmod['co2_ppm_sim'], color='red', label='Joyce et al. 2021 - const met')
+plt.plot(obsmod['decimal_year'], obsmod['co2_ppm_obs'], color='black', label='Observed')
+plt.title('Atmospheric CO2 concentrations at Point Barrow')
+plt.legend(loc="upper left")
+plt.ylabel('CO2 (ppm)')
+plt.xlabel('Year')
+plt.show()
+```
+Detrended
+```{python}
+from sklearn.linear_model import LinearRegression
+
+X = obsmod.iloc[:, 0].values.reshape(-1, 1) # put your dates in here
+y = obsmod.iloc[:, 1].values.reshape(-1, 1)  # put your kwh in here
+model = LinearRegression()
+model.fit(X, y)
+X_predict = [X]  # put the dates of which you want to predict kwh here
+y_predict = model.predict(X)
+obsmod['co2_ppm_obs_tr'] = pd.Series(y_predict.reshape(-1))
+obsmod['co2_ppm_obs_dt'] = obsmod['co2_ppm_obs'] - obsmod['co2_ppm_obs_tr']
+
+X = obsmod.iloc[:, 0].values.reshape(-1, 1) # put your dates in here
+y = obsmod.iloc[:, 2].values.reshape(-1, 1)  # put your kwh in here
+model.fit(X, y)
+X_predict = [X]  # put the dates of which you want to predict kwh here
+y_predict = model.predict(X)
+obsmod['co2_ppm_sim_tr'] = pd.Series(y_predict.reshape(-1))
+obsmod['co2_ppm_sim_dt'] = obsmod['co2_ppm_sim'] - obsmod['co2_ppm_sim_tr']
+```
+
+Plot detrended observed vs modelled CO2
+```{python}
+plt.clf()
+plt.plot(obsmod['decimal_year'], obsmod['co2_ppm_sim_dt'], color='blue', label='Joyce et al. 2021')
+plt.plot(obsmod['decimal_year'], obsmod['co2_ppm_obs_dt'], color='black', label='Observed')
+plt.legend(loc="upper left")
+plt.title('Detrended atmospheric CO2 concentrations at Point Barrow')
+plt.ylabel('CO2 (ppm)')
+plt.xlabel('Year')
+plt.show()
+```
+
+Fitting the ccgcrv trend
+```{python}
+
+```
+
