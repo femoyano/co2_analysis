@@ -51,14 +51,15 @@ def read_proc_write(files, file_out):
     # Crate and format dataframe
     co2_df = mdata[['Dec_year', 'co2']]
     co2_df.columns = ["decimal_year", "co2_ppm"]
+
+    # Adjust time of month to match observation file
+    co2_df['decimal_year'] = co2_df['decimal_year'] - 0.04
+    
     # Round both variables to two digits to match observation monthly file
     co2_df = co2_df.round(2)
-    # Adjust time of month to match observation file
-    co2_df['decimal_year'] = co2_df['decimal_year'] - 0.04 
-    co2_df.columns = ['decimal_year', 'co2_ppm_sim']
-    co2_df.to_csv(file_out)
+    
+    co2_df.to_csv(file_out, index=False)
     return(co2_df)
 
 df_vary = read_proc_write(files_vary, file_vary_out)
 df_const = read_proc_write(files_const, file_const_out)
-
