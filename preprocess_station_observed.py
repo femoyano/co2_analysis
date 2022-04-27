@@ -17,11 +17,11 @@ if not os.path.exists(dataout_dir):
     os.makedirs(dataout_dir)
 
 # For now working with specific stations that have monthly values. May change in future (check Forkel code)
-file_brw = datain_dir/"co2_brw_surface-insitu_1_ccgg_monthly.txt"
-file_mlo = datain_dir/"co2_mlo_surface-insitu_1_ccgg_monthly.txt"
+file_brw = datain_dir/"co2_brw_surface-flask_1_ccgg_monthly.txt"
+file_mlo = datain_dir/"co2_mlo_surface-flask_1_ccgg_monthly.txt"
 
-file_brw_out = dataout_dir/"BRW_station_co2_observed_insitu.csv"
-file_mlo_out = dataout_dir/"MLO_station_co2_observed_insitu.csv"
+file_brw_out = dataout_dir/"BRW_station_co2_observed_flask.csv"
+file_mlo_out = dataout_dir/"MLO_station_co2_observed_flask.csv"
 
 def read_proc_write(file_in, file_out):
     # Read in the file
@@ -32,14 +32,14 @@ def read_proc_write(file_in, file_out):
     # mdata = data.groupby(['Year', 'Month']).agg(np.mean) 
     mdata = data
 
-    # Crate and format dataframe
-    co2_df = mdata[['time_decimal', 'value']]
-    co2_df.columns = ["decimal_year", "co2_ppm"]
-    # Round both variables to two digits
-    co2_df = co2_df.round(2)
+    # Crate dataframe
+    co2_df = mdata[['year', 'month', 'value']].copy()
     # Rename columns
-    co2_df.columns = ['decimal_year', 'co2_ppm']
-    co2_df.loc[co2_df['co2_ppm'] < 200, 'co2_ppm'] = None
+    co2_df.columns = ['year', 'month', 'co2_ppm']
+    # Round co2 to two digits
+    co2_df.loc[:,'co2_ppm'] = co2_df['co2_ppm'].round(2)
+    # Mark missing values
+    co2_df.loc[co2_df['co2_ppm'] < 0, 'co2_ppm'] = None
     co2_df.to_csv(file_out, index=False)
     return(co2_df)
 

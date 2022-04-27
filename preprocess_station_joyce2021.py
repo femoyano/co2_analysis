@@ -20,17 +20,22 @@ import pandas as pd
 import numpy as np
 
 datain_dir = Path("../../../Data/Joyce_et_al_2021_GRL")
-dataout_dir = Path("../data/stations/monthly")
+dataout_dir = Path("../data/stations")
 if not os.path.exists(dataout_dir):
     os.makedirs(dataout_dir)
 
 files_const = sorted(glob(os.path.realpath(datain_dir/"BRW_station_co2_atmos_const*")))
 files_vary = sorted(glob(os.path.realpath(datain_dir/"BRW_station_co2_atmos_vary*")))
 
-file_vary_out = dataout_dir / "BRW_station_co2_joyce_varyall.csv"
-file_const_out = dataout_dir / "BRW_station_co2_joyce_constmet.csv"
+fileout_vary_monthly = dataout_dir / "BRW_CO2_monthly_joyce_varyall.csv"
+fileout_const_monthly = dataout_dir / "BRW_CO2_monthly_joyce_constmet.csv"
 
-def read_proc_write(files, file_out):
+fileout_vary_daily = dataout_dir / "BRW_CO2_daily_joyce_varyall.csv"
+fileout_const_daily = dataout_dir / "BRW_CO2_daily_joyce_constmet.csv"
+fileout_vary_hourly = dataout_dir / "BRW_CO2_3hourly_joyce_constmet.csv"
+fileout_const_hourly = dataout_dir / "BRW_CO2_3hourly_joyce_constmet.csv"
+
+def read_proc_write(files, file_out_monthly, file_out_daily, file_out_hourly):
     # First read in the files
     for i in range(0, len(files)):
         f = files[i]
@@ -44,22 +49,41 @@ def read_proc_write(files, file_out):
             data_in.columns = colnames
             data = pd.concat([data, data_in])
 
-    # Then calculate the total CO2 concentrations and aggregate to monthly means
+    # Then calculate the total CO2 concentrations
     data['co2'] = data["Background"] + data["FF"] + data["Ocean"] + data["NEE_ctrl"] + data["FIRE_ctrl"]
-    mdata = data.groupby(['Year', 'Month']).agg(np.mean)
-    
+
+    # Aggregate to monthly and daily means
+    mdata = data.groupby(['Year', 'Month'], as_index=False).agg(np.mean)
+    ddata = data.groupby(['Year', 'Month', 'Day'], as_index=False).agg(np.mean)
+
     # Crate and format dataframe
-    co2_df = mdata[['Dec_year', 'co2']]
-    co2_df.columns = ["decimal_year", "co2_ppm"]
+    mdata = mdata[['Year', 'Month', 'co2']]
+    mdata.columns = ['year', 'month', 'co2_ppm']
+    ddata = ddata[['Year', 'Month', 'Day', 'co2']]
+    ddata.columns = ['year', 'month', 'day', 'co2_ppm']
+    data = data[['Year', 'Month', 'Day', 'Hour', 'co2']]
+    data.columns = ['year', 'month', 'day', 'hour', 'co2_ppm']
 
     # Adjust time of month to match observation file
-    co2_df['decimal_year'] = co2_df['decimal_year'] - 0.04
-    
-    # Round both variables to two digits to match observation monthly file
-    co2_df = co2_df.round(2)
-    
-    co2_df.to_csv(file_out, index=False)
-    return(co2_df)
+    mdata.loc[:, 'year'] = mdata['year'].astype(int)
+    mdata.loc[:, 'month'] = mdata['month'].astype(int)
+    ddata.loc[:, 'year'] = ddata['year'].astype(int)
+    ddata.loc[:, 'month'] = ddata['month'].astype(int)
+    ddata.loc[:, 'day'] = ddata['day'].astype(int)
+    data.loc[:, 'year'] = data['year'].astype(int)
+    data.loc[:, 'month'] = data['month'].astype(int)
+    data.loc[:, 'day'] = data['day'].astype(int)
+    data.loc[:, 'hour'] = data['hour'].astype(int)
 
-df_vary = read_proc_write(files_vary, file_vary_out)
-df_const = read_proc_write(files_const, file_const_out)
+    # Round co2 and dec year to two digits
+    mdata.loc[:,'co2_ppm'] = mdata['co2_ppm'].round(2)
+    ddata.loc[:,'co2_ppm'] = ddata['co2_ppm'].round(2)
+    data.loc[:,'co2_ppm'] = data['co2_ppm'].round(2)
+
+    mdata.to_csv(file_out_monthly, index=False)
+    ddata.to_csv(file_out_daily, index=False)
+    data.to_csv(file_out_hourly, index=False)
+    return mdata, ddata
+
+df_vary = read_proc_write(files_vary, fileout_vary_monthly, fileout_vary_daily, fileout_vary_hourly)
+df_const = read_proc_write(files_const, fileout_const_monthly, fileout_const_daily, fileout_const_hourly)

@@ -8,19 +8,19 @@ library(ggplot2)
 
 # obsfile <- 'data/'
 # obsfile <- 'data/co2_brw_surface-insitu_1_ccgg_monthly.txt'
-obsfiles <- dir('data_subset1/')
+co2files <- dir('../data/stations/monthly_comp/')
 
 sites <- NA
 colors <- c(black="black", red="red", blue='blue', green='green')
-# colors <- terrain.colors(length(obsfiles))
+# colors <- terrain.colors(length(co2files))
 
 df_out <- data.frame(site = character(), x0=double(), y1=double(), y2=double(), y3=double(), y4=double())
 df_orig <- data.frame(site = character(), xp=double(), yp=double())
 df_amp <- data.frame(site = character(), year=double(), amplitude=double())
 
-for (i in 1:length(obsfiles)) {
+for (i in 1:length(co2files)) {
   
-  filein <- obsfiles[i]
+  filein <- co2files[i]
   site <- tools::file_path_sans_ext(filein)
   names(colors)[i] <- site
   data <- read.csv(file.path('data', filein), sep = '', header = TRUE, na.strings = '-999.99')

@@ -27,14 +27,15 @@ import matplotlib.pyplot as plt
 
 Read in monthly station data 
 ```{python}
-file_brw_obs = Path("../data/stations/monthly_comp/BRW_station_co2_observed_insitu.csv")
+file_brw_obs = Path("../data/stations/monthly_comp/BRW_station_co2_observed_flask.csv")
 file_brw_joyce_varyall = Path("../data/stations/monthly_comp/BRW_station_co2_joyce_varyall.csv")
 ```
 
 
 ```{python}
-brw_obs = pd.read_csv(file_br)
-obsmod = pd.merge(obs_brw, co2_df, on="decimal_year")
+brw_obs = pd.read_csv(file_brw_obs)
+brw_joyce = pd.read_csv(file_brw_obs)
+co2_brw = pd.merge(brw_obs, brw_joyce, on=("year", "month")
 ```
 
 Merge and plot observed vs modelled CO2
@@ -82,4 +83,7 @@ plt.xlabel('Year')
 plt.show()
 ```
 
+```{r}
+py$
+```
 

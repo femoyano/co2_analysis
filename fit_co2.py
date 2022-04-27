@@ -5,12 +5,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from ccgcrv.ccgcrv_python import ccg_filter
+from ccgcrv_python import ccg_filter
 
 # filein should have missing value rows removed since it doesn't seem to work otherwise.
 filein = 'co2_filein.txt'
 # data = pd.read_csv(filein, delimiter = ' ', header=None, names=['time_decimal', 'co2_ppm'])
-data = pd.read_csv(filein, delimiter = ' ')
+data = pd.read_csv(filein, delimiter = ' ', header = 0, names = ['time_decimal', 'co2_ppm'])
 
 xp = data["time_decimal"].to_numpy()
 yp = data["co2_ppm"].to_numpy()
@@ -27,9 +27,10 @@ use_gain_factor=False,
 debug=False
 
 # create the ccgfilt object
-filt = ccg_filter.ccgFilter(xp=xp, yp=yp, shortterm=shortterm, longterm=longterm,
-    sampleinterval=sampleinterval, numpolyterms=numpolyterms,
-    numharmonics=numharmonics, timezero=timezero, gap=gap, debug=debug)
+# filt = ccg_filter.ccgFilter(xp=xp, yp=yp, shortterm=shortterm, longterm=longterm,
+#     sampleinterval=sampleinterval, numpolyterms=numpolyterms,
+#     numharmonics=numharmonics, timezero=timezero, gap=gap, debug=debug)
+filt = ccg_filter.ccgFilter(xp=xp, yp=yp)
 #
 mm = filt.getMonthlyMeans()
 amps = filt.getAmplitudes()
