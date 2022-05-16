@@ -7,3 +7,4 @@ ccgcrv_python
 ccgcrv_testing.pptx
 ccgcrv
 .DS_Store
+__pycache__
