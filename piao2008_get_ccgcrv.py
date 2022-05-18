@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-def get_ccgcrv(co2_file='../data/piao_2008/piao_co2_fm.csv', 
-    stations_file='../data/piao_2008/piao_stations.csv',
-    start_col = 'start_piao2008', end_col = 'end_piao2008'):
+def get_ccgcrv(co2_file, stations_file, start_col = 'start_total', end_col = 'end_total'):
     # Function takes a list of stations and respective co2 time series and outputs ccgcrv fitted data.
     # ccgcrv module function is used and results saved in a dictionary, with keys being station names
     # co2_file: file with the co2 data
@@ -45,6 +43,14 @@ def get_ccgcrv(co2_file='../data/piao_2008/piao_co2_fm.csv',
         yend = int(stations.loc[stations['name'] == s, end_col])
         sel = (co2_fm['station'] == s) & (co2_fm['year'].between(ystart, yend, inclusive='both'))
         input = co2_fm.loc[sel, ['co2', 'dec_year']]
+        
+        # Need to add one row with value for following year. Otherwise no results returned for last year (bug in ccvcrg?).
+        ar = np.arange(len(input))
+        input = input.iloc[np.append(ar, ar[-1])]
+        col_y = input.columns.get_loc('dec_year')
+        input.iloc[-1, col_y] = np.round(input.iloc[-1, col_y]+1)
+
+        # Now call ccgcrv
         out = ccg_fits(data=input, pars=ccg_pars1)
         ccg_output[s] = out
 

@@ -94,8 +94,7 @@ def get_tmp_mean(
 
 
     # Save to file ----
-
-    file_out = 'tmp_yearly_means_' + str(limS) + str(limN) + 'N.csv'
-    tm.to_csv('../data/piao_2008/' + file_out)
+    # file_out = 'tmp_yearly_means_' + str(limS) + str(limN) + 'N.csv'
+    # tm.to_csv('../data/piao_2008/' + file_out)
 
     return tm
