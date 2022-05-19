@@ -61,12 +61,19 @@ def get_tmp_mean(
     # Calculate the weighted average for each season and year (i.e. the sum of the weighted values)
     da_trs = (da_tr * weights).groupby("year_season").sum(dim="time")
 
-    # Get the average for the entire region (weight by gridcell size)
-    weights = np.cos(np.deg2rad(da_trs.lat)) # cosine of latitude is a proxy of gridcell size
+    # Get the average for the entire region (weight by gridcell size) ----
+
+    # Get the sum of the relative areas for cells with temp data
+    da_ones = da_tr.isel(time=0) / da_tr.isel(time=0)
+    glob_w = da_ones * np.cos(np.deg2rad(da_trs.lat))
+    glob_ws = glob_w.sum()
+
+    # Then weight and divide by total weighting sum
+    weights = np.cos(np.deg2rad(da_trs.lat))
     weights.name = "weights"
     da_trsw = da_trs.weighted(weights) # Get weighted values
-    da_trsm = da_trsw.mean(('lat', 'lon')) # Get the average over lat and lon
-
+    da_trsm = da_trsw.sum(('lat', 'lon')) / glob_ws.values # Get the average over lat and lon
+    
 
     # Convert to pandas df ----
 
