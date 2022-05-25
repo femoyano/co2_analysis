@@ -4,7 +4,8 @@
 def get_tmp_mean(
     tmp_file='/Users/moyanofe/BigData/GeoSpatial/Climate/CRU-TS_4.05_1901-2020/cru_ts4.05.1901.2020.tmp.dat.nc',
     limS=30,
-    limN=80):
+    limN=80,
+    excl_grnlnd=True):
     # Function calculates averages for yearly and seasonally for region of interest saves to file.
     # limS: southernmost latidude to determine region of interest
     # limN: northernmost latidude to determine region of interest
@@ -22,6 +23,10 @@ def get_tmp_mean(
     ds_t = xr.open_dataset(tmp_file)
     da_t = ds_t['tmp']
     da_tr = da_t.sel(lat=slice(limS,limN)) # Get values only for the region of interest
+    da_tr = da_t.sel(lat=slice(limS,limN)) # Get values only for the region of interest
+    if excl_grnlnd:
+        # To exclude Greenland, this should be approximate
+        da_tr = da_tr.where((da_tr.lon > -20) | (da_tr.lon < -60) | (da_tr.lat < 60)) 
 
 
     # Get yearly averages for the region ----
