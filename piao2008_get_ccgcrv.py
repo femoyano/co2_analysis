@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # coding: utf-8
 
-def get_ccgcrv(co2_file, stations_file, start_col = 'start_total', end_col = 'end_total'):
+def get_ccgcrv(co2_file, stations_file, ccg_pars, start_col = 'start_total', end_col = 'end_total'):
     # Function takes a list of stations and respective co2 time series and outputs ccgcrv fitted data.
     # ccgcrv module function is used and results saved in a dictionary, with keys being station names
     # co2_file: file with the co2 data
@@ -17,23 +16,6 @@ def get_ccgcrv(co2_file, stations_file, start_col = 'start_total', end_col = 'en
     # Read in data
     co2_fm = pd.read_csv(co2_file)
     stations = pd.read_csv(stations_file)
-
-    # Default parameter values as used in the ccgcrv code.
-    ccg_pars_def = {
-        'shortterm': 80,
-        'longterm': 667,
-        'sampleinterval': 0,
-        'numpolyterms': 3,
-        'numharmonics': 4,
-        'timezero': -1,
-        'gap': 0,
-        'use_gain_factor': False,
-        'debug': False
-    }
-
-    # Set sampleinterval to 1
-    ccg_pars1 = deepcopy(ccg_pars_def)
-    ccg_pars1['sampleinterval'] = 1
 
     # Get ccgcrv fits for each station and save to a dictionary
     ccg_output = dict()
@@ -51,7 +33,7 @@ def get_ccgcrv(co2_file, stations_file, start_col = 'start_total', end_col = 'en
         input.iloc[-1, col_y] = np.round(input.iloc[-1, col_y]+1)
 
         # Now call ccgcrv
-        out = ccg_fits(data=input, pars=ccg_pars1)
+        out = ccg_fits(data=input, pars=ccg_pars)
         ccg_output[s] = out
 
 
